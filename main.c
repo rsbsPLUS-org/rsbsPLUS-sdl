@@ -23,6 +23,8 @@ const extern int SCREEN_HEIGHT;
 #endif
 
 void game(void){
+	//fix to make joystick work
+	SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
 	//declare SDL window, event and renderer
 	SDL_Window* window = NULL;
 	SDL_Event event;
@@ -62,8 +64,8 @@ void game(void){
 
 	//load up circle textures
 	SDL_Texture* blauTexture = IMG_LoadTexture(renderer, "D:\\res\\blau.bmp");
-	SDL_Texture* roteTexture = IMG_LoadTexture(renderer, "D:\\res\\rote.bmp");
-	SDL_Texture* grunTexture = IMG_LoadTexture(renderer, "D:\\res\\grun.bmp");
+	SDL_Texture* rotTexture = IMG_LoadTexture(renderer, "D:\\res\\rot.bmp");
+	SDL_Texture* gruenTexture = IMG_LoadTexture(renderer, "D:\\res\\gruen.bmp");
 
 	//load bg texture
 	SDL_Texture* bgTexture = IMG_LoadTexture(renderer,   "D:\\res\\bg.bmp");
@@ -86,7 +88,7 @@ void game(void){
 	joystick = SDL_GameControllerOpen(0);
 
 	//set current circle to default circle (red)
-	SDL_Texture* curCircle = roteTexture;
+	SDL_Texture* curCircle = rotTexture;
 
 	//declare game vars
 	uint8_t moveDelta = 10;
@@ -150,13 +152,13 @@ void game(void){
 			//check sel legend: 0 = red, 1 = blue, 2 = green
 			switch (sel) {
 				case 0:
-					curCircle = roteTexture;
+					curCircle = rotTexture;
 					break;
 				case 1:
 					curCircle = blauTexture;
 					break;
 				case 2:
-					curCircle = grunTexture;
+					curCircle = gruenTexture;
 					break;
 			}
 		}
