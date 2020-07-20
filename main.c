@@ -23,24 +23,24 @@ const extern int SCREEN_HEIGHT;
 #endif
 
 void game(void){
-	SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
-	SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
-
+	//declare SDL window, event and renderer
 	SDL_Window* window = NULL;
 	SDL_Event event;
-	SDL_Surface* screen = NULL;
 	SDL_Renderer* renderer = NULL;
 
-	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER) < 0) {
+	//init SDL video and game controller
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) < 0) {
 		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't init SDL.\n");
 		printSDLErrorAndReboot();
 	}
 
+	//create window
 	window = SDL_CreateWindow("rsbs-xboxen", 
 			SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
 			SCREEN_WIDTH, SCREEN_HEIGHT,
 			SDL_WINDOW_SHOWN);
 
+	//throw error if window wasn't created
 	if (window == NULL) {
 #ifdef NXDK
 		debugPrint("Window could not be created.\n");
@@ -51,74 +51,89 @@ void game(void){
 		printSDLErrorAndReboot();
 	}
 
+	//create renderer
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
 
+	//init SDL_image with jpg
 	if (!(IMG_Init(IMG_INIT_JPG) & IMG_INIT_JPG)){
 		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't init SDL_image.\n");
 		printSDLErrorAndReboot();
 	}
 
-	screen = SDL_GetWindowSurface(window);
-	if (!screen) {
-		SDL_VideoQuit();
-		printSDLErrorAndReboot();
-	}
-
+	//load up circle textures
 	SDL_Texture* blauTexture = IMG_LoadTexture(renderer, "D:\\res\\blau.bmp");
 	SDL_Texture* roteTexture = IMG_LoadTexture(renderer, "D:\\res\\rote.bmp");
 	SDL_Texture* grunTexture = IMG_LoadTexture(renderer, "D:\\res\\grun.bmp");
 
+	//load bg texture
 	SDL_Texture* bgTexture = IMG_LoadTexture(renderer,   "D:\\res\\bg.bmp");
 
+	//create rects for circles and the screen. used in rendering
 	SDL_Rect sRect = {256,176,128,128};
 	SDL_Rect screenRect = {0,0,SCREEN_WIDTH,SCREEN_HEIGHT};
 
 
+	//log how many joysticks were found
 #ifdef NXDK
 	debugPrint("%i joysticks were found.\n\n", SDL_NumJoysticks() );
 #else
 	printf("%i joysticks were found.\n\n", SDL_NumJoysticks() );
 #endif
 
+	//create joystick and open joystick 0
 	SDL_GameController* joystick;
 	SDL_GameControllerEventState(SDL_ENABLE);
 	joystick = SDL_GameControllerOpen(0);
 
+	//set current circle to default circle (red)
 	SDL_Texture* curCircle = roteTexture;
 
+	//declare game vars
 	uint8_t moveDelta = 10;
-	uint8_t sel = 10;
+	uint8_t sel = 0;
 	uint8_t left = 0;
 	uint8_t right = 0;
 
+	//declare variable to stop game loop
 	char done = 0;
 	while (!done) {
+		//wait for vblank
 		XVideoWaitForVBlank();
+		//event loop
 		while (SDL_PollEvent(&event)) {
+			//check event type
 			switch (event.type) {
 				case SDL_QUIT:
 					done = 1;
 					break;
 				case SDL_CONTROLLERBUTTONDOWN:
+					//check which button was pressed
 					switch (event.cbutton.button) {
+						//if up was pressed, set sel to 1
 						case SDL_CONTROLLER_BUTTON_DPAD_UP:
 							sel = 1;
 							break;
+						//if down was pressed set sel to 2
 						case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
 							sel = 2;
 							break;
+						//if left was presset set left 
 						case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
 							left = 1;
 							right = 0;
 							break;
+						//if right was presset set right 
 						case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
 							right = 1;
 							left = 0;
 							break;
 					}
 					break;
-				case SDL_CONTROLLERBUTTONUP:
+			//check if any button was depressed
+			case SDL_CONTROLLERBUTTONUP:
+					//check which button was depressed
 					switch (event.cbutton.button) {
+						//if either up or down was depressed set sel back to 0
 						case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
 						case SDL_CONTROLLER_BUTTON_DPAD_UP:
 							sel = 0;
@@ -132,6 +147,7 @@ void game(void){
 					}
 					break;
 			}
+			//check sel legend: 0 = red, 1 = blue, 2 = green
 			switch (sel) {
 				case 0:
 					curCircle = roteTexture;
@@ -144,26 +160,35 @@ void game(void){
 					break;
 			}
 		}
+		//if right was set and resulting x is not out of the screen make circle go right 
 		if (right && (sRect.x + moveDelta <= SCREEN_WIDTH - 128 ) ) sRect.x += moveDelta;
+		//if left was set and resulting x is not out of the screen make circle go left
 		if (left && (sRect.x > 0) ) sRect.x -= moveDelta;
+		//render out background to clear screen
 		SDL_RenderCopy(renderer, bgTexture,    NULL, &screenRect);
+		//render circle
 		SDL_RenderCopy(renderer, curCircle,    NULL, &sRect);
+		//"blit" render to window
 		SDL_RenderPresent(renderer);
 		SDL_UpdateWindowSurface(window);
 	}
 
+	//stop video system
 	SDL_VideoQuit();
+	//close joystick stream
 	SDL_GameControllerClose(joystick);
 }
 
 int main() {
 #ifdef NXDK
+	//set video mode 
 	XVideoSetMode(640,480,32,REFRESH_DEFAULT);
 #endif
 	game();
 	return 0;
 }
 
+//functions for error reporting
 #ifdef NXDK
 static void printSDLErrorAndReboot(void) {
 	debugPrint("SDL_Error: %s\n", SDL_GetError());
