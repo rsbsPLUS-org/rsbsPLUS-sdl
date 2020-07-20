@@ -92,9 +92,6 @@ void game(void){
 
 	//declare game vars
 	uint8_t moveDelta = 10;
-	uint8_t sel = 0;
-	uint8_t left = 0;
-	uint8_t right = 0;
 
 	//declare variable to stop game loop
 	char done = 0;
@@ -108,64 +105,22 @@ void game(void){
 				case SDL_QUIT:
 					done = 1;
 					break;
-				case SDL_CONTROLLERBUTTONDOWN:
-					//check which button was pressed
-					switch (event.cbutton.button) {
-						//if up was pressed, set sel to 1
-						case SDL_CONTROLLER_BUTTON_DPAD_UP:
-							sel = 1;
-							break;
-						//if down was pressed set sel to 2
-						case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
-							sel = 2;
-							break;
-						//if left was presset set left 
-						case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
-							left = 1;
-							right = 0;
-							break;
-						//if right was presset set right 
-						case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
-							right = 1;
-							left = 0;
-							break;
-					}
-					break;
-			//check if any button was depressed
-			case SDL_CONTROLLERBUTTONUP:
-					//check which button was depressed
-					switch (event.cbutton.button) {
-						//if either up or down was depressed set sel back to 0
-						case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
-						case SDL_CONTROLLER_BUTTON_DPAD_UP:
-							sel = 0;
-							break;
-						case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
-							left = 0;
-							break;
-						case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
-							right = 0;
-							break;
-					}
-					break;
-			}
-			//check sel legend: 0 = red, 1 = blue, 2 = green
-			switch (sel) {
-				case 0:
-					curCircle = rotTexture;
-					break;
-				case 1:
-					curCircle = blauTexture;
-					break;
-				case 2:
-					curCircle = gruenTexture;
-					break;
 			}
 		}
-		//if right was set and resulting x is not out of the screen make circle go right 
-		if (right && (sRect.x + moveDelta <= SCREEN_WIDTH - 128 ) ) sRect.x += moveDelta;
-		//if left was set and resulting x is not out of the screen make circle go left
-		if (left && (sRect.x > 0) ) sRect.x -= moveDelta;
+		
+		//if right is pressed and resulting x is not out of the screen make circle go right 
+		if (SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_RIGHT) && (sRect.x + moveDelta <= SCREEN_WIDTH - 128 ) ) sRect.x += moveDelta;
+		
+		//if left is set and resulting x is not out of the screen make circle go left
+		else if (SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_LEFT) && (sRect.x > 0) ) sRect.x -= moveDelta;
+
+		//if up is pressed set to blue
+		if (SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_UP)) curCircle = blauTexture;
+		//otherwise if down is pressed set to green
+		else if (SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_DOWN)) curCircle = gruenTexture;
+		//otherwise set to red
+		else curCircle = rotTexture;
+
 		//render out background to clear screen
 		SDL_RenderCopy(renderer, bgTexture,    NULL, &screenRect);
 		//render circle
