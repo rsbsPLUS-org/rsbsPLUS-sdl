@@ -1,3 +1,6 @@
+//SPDX-License-Identifier: BSD-3-Clause
+//SPDX-FileCopyrightText: 2020 Lorenzo Cauli (lorecast162)
+
 #ifdef NXDK
 //XBOX Defines
 #include <hal/debug.h>
@@ -22,9 +25,12 @@ const extern int SCREEN_HEIGHT;
 #define SCREEN_HEIGHT 480
 #endif
 
+#define FPS 60
+
 void game(void){
 	//fix to make joystick work
 	SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
+
 	//declare SDL window, event and renderer
 	SDL_Window* window = NULL;
 	SDL_Event event;
@@ -62,13 +68,19 @@ void game(void){
 		printSDLErrorAndReboot();
 	}
 
+#ifdef NXDK
 	//load up circle textures
 	SDL_Texture* blauTexture = IMG_LoadTexture(renderer, "D:\\res\\blau.bmp");
 	SDL_Texture* rotTexture = IMG_LoadTexture(renderer, "D:\\res\\rot.bmp");
 	SDL_Texture* gruenTexture = IMG_LoadTexture(renderer, "D:\\res\\gruen.bmp");
-
 	//load bg texture
 	SDL_Texture* bgTexture = IMG_LoadTexture(renderer,   "D:\\res\\bg.bmp");
+#else
+	SDL_Texture* blauTexture = IMG_LoadTexture(renderer, "./res/blau.bmp");
+	SDL_Texture* rotTexture = IMG_LoadTexture(renderer, "./res/rot.bmp");
+	SDL_Texture* gruenTexture = IMG_LoadTexture(renderer, "./res/gruen.bmp");
+	SDL_Texture* bgTexture = IMG_LoadTexture(renderer,   "./res/bg.bmp");
+#endif
 
 	//create rects for circles and the screen. used in rendering
 	SDL_Rect sRect = {256,176,128,128};
@@ -96,8 +108,13 @@ void game(void){
 	//declare variable to stop game loop
 	char done = 0;
 	while (!done) {
+		if (SDL_GetTicks() < 1000 / FPS) {
+			SDL_Delay((1000 / FPS) - SDL_GetTicks());
+		}
+#ifdef NXDK
 		//wait for vblank
 		XVideoWaitForVBlank();
+#endif
 		//event loop
 		while (SDL_PollEvent(&event)) {
 			//check event type
@@ -107,12 +124,13 @@ void game(void){
 					break;
 			}
 		}
+		const uint8_t* state = SDL_GetKeyboardState(NULL);
 		
 		//if right is pressed and resulting x is not out of the screen make circle go right 
-		if (SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_RIGHT) && (sRect.x + moveDelta <= SCREEN_WIDTH - 128 ) ) sRect.x += moveDelta;
+		if (state[SDL_SCANCODE_RIGHT] || SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_RIGHT) && (sRect.x + moveDelta <= SCREEN_WIDTH - 128 ) ) sRect.x += moveDelta;
 		
 		//if left is set and resulting x is not out of the screen make circle go left
-		else if (SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_LEFT) && (sRect.x > 0) ) sRect.x -= moveDelta;
+		else if (state[SDL_SCANCODE_LEFT] || SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_LEFT) && (sRect.x > 0) ) sRect.x -= moveDelta;
 
 		//if up is pressed set to blue
 		if (SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_UP)) curCircle = blauTexture;
