@@ -17,13 +17,8 @@ static void printSDLErrorAndReboot(void);
 
 static void printIMGErrorAndReboot(void);
 
-#ifdef NXDK
-const extern int SCREEN_WIDTH;
-const extern int SCREEN_HEIGHT;
-#else
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
-#endif
 
 #define FPS 60
 
@@ -157,7 +152,7 @@ void game(void){
 int main() {
 #ifdef NXDK
 	//set video mode 
-	XVideoSetMode(640,480,32,REFRESH_DEFAULT);
+	XVideoSetMode(SCREEN_WIDTH,SCREEN_HEIGHT,32,REFRESH_DEFAULT);
 #endif
 	game();
 	return 0;
