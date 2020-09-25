@@ -41,7 +41,7 @@ void game(void){
 	}
 
 	//create renderer
-	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
+	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
 	//init SDL_image with jpg
 	if (!(IMG_Init(IMG_INIT_JPG) & IMG_INIT_JPG)){
@@ -76,9 +76,6 @@ void game(void){
 	//declare variable to stop game loop
 	char done = 0;
 	while (!done) {
-		if (SDL_GetTicks() < 1000 / FPS) {
-			SDL_Delay((1000 / FPS) - SDL_GetTicks());
-		}
 		//event loop
 		while (SDL_PollEvent(&event)) {
 			//check event type
